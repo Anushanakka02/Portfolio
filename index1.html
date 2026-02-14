@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream - Music & Video Player</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #030303;
+            --bg-nav: #000000;
+            --bg-card: #212121;
+            --bg-elevated: #212121;
+            --bg-header: rgba(0,0,0,0.7);
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --brand-red: #ff0000;
+            --border-color: #333333;
+            --nav-width: 240px;
+            --player-height: 72px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--nav-width);
+            background-color: var(--bg-nav);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 12px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            transition: 0.2s;
+        }
+
+        .nav-item:hover { background-color: #272727; }
+        .nav-item.active { background-color: #f1f1f1; color: #000; font-weight: 500; }
+        
+        .nav-icon { margin-right: 20px; width: 24px; height: 24px; fill: currentColor; }
+        .nav-header { color: var(--text-secondary); font-size: 13px; font-weight: 500; padding-left: 12px; margin-top: 20px; margin-bottom: 8px; letter-spacing: 0.5px; }
+
+        /* --- MAIN CONTENT --- */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            background: linear-gradient(180deg, #1a1a1a 0%, var(--bg-body) 40%);
+            padding-bottom: var(--player-height);
+        }
+
+        /* TOP HEADER */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            height: 64px;
+            background: var(--bg-header);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .logo span { color: var(--brand-red); font-size: 28px; }
+
+        .search-bar {
+            width: 40%;
+            max-width: 600px;
+            background: #121212;
+            border: 1px solid #444;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+        }
+        .search-bar input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 10px;
+            outline: none;
+        }
+
+        /* --- TOP LANGUAGE BAR --- */
+        .language-bar {
+            display: flex;
+            gap: 10px;
+            padding: 10px 32px;
+            overflow-x: auto;
+            background: rgba(0,0,0,0.4);
+            border-bottom: 1px solid #333;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE */
+        }
+        .language-bar::-webkit-scrollbar { 
+            display: none;  /* Chrome/Safari */
+        }
+
+        .lang-pill {
+            padding: 6px 16px;
+            background-color: #2a2a2a;
+            color: #ccc;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .lang-pill:hover {
+            background-color: #404040;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .lang-pill.active {
+            background-color: var(--brand-red);
+            color: white;
+            border-color: var(--brand-red);
+        }
+
+        /* CONTENT GRID */
+        .section-header { padding: 24px 32px 8px 32px; font-size: 24px; font-weight: 700; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 24px;
+            padding: 0 32px 32px 32px;
+        }
+
+        .sub-section-header {
+            grid-column: 1 / -1;
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+        }
+        .sub-section-header::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background-color: var(--brand-red);
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        .card {
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.1s;
+        }
+        
+        .card-img-container {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 12px;
+            background: #2a2a2a;
+        }
+
+        .card-img-container img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            transition: transform 0.3s;
+        }
+        .card:hover .card-img-container img { transform: scale(1.05); }
+
+        .play-overlay {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            width: 48px;
+            height: 48px;
+            background: var(--brand-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            z-index: 2;
+        }
+        .card:hover .play-overlay { opacity: 1; }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .card-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* --- PLAYER BAR --- */
+        .player {
+            height: var(--player-height);
+            background-color: #000000;
+            border-top: 1px solid #1f1f1f;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 200;
+        }
+
+        .p-left { width: 30%; display: flex; align-items: center; min-width: 180px; }
+        .p-art { 
+            width: 48px; 
+            height: 48px; 
+            border-radius: 4px; 
+            margin-right: 12px; 
+            background: #333; 
+            background-size: cover; 
+            background-position: center;
+        }
+        .p-info { overflow: hidden; display: flex; flex-direction: column; }
+        .p-title-row { display: flex; align-items: center; gap: 8px; }
+        .p-title { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .btn-like {
+            background: none;
+            border: none;
+            color: #777;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        .btn-like:hover { color: #fff; transform: scale(1.1); }
+        .btn-like.liked { color: var(--brand-red); }
+
+        .p-sub { font-size: 12px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .p-center { width: 40%; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .controls { display: flex; align-items: center; gap: 20px; }
+        .ctrl-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 20px; }
+        .ctrl-btn:hover { color: #fff; }
+        .btn-play { font-size: 32px; color: #fff; }
+
+        .progress { width: 100%; max-width: 600px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #aaa; }
+        .prog-bar-bg { flex: 1; height: 4px; background: #404040; border-radius: 2px; cursor: pointer; position: relative; }
+        .prog-bar-fill { width: 0%; height: 100%; background: #fff; border-radius: 2px; }
+        .prog-bar-bg:hover .prog-bar-fill { background: var(--brand-red); }
+
+        .p-right { width: 30%; display: flex; justify-content: flex-end; align-items: center; gap: 15px; }
+        
+        .btn-video {
+            border: 1px solid #444;
+            color: #fff;
+            background: transparent;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .btn-video:hover { border-color: #fff; transform: scale(1.05); }
+        .btn-video.active { background: var(--brand-red); border-color: var(--brand-red); }
+
+        @media (max-width: 800px) {
+            .sidebar { display: none; }
+            .p-right, .p-sub { display: none; }
+        }
+
+        /* --- VIDEO OVERLAY MODAL --- */
+        .video-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-modal.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .video-container {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            position: relative;
+        }
+
+        video {
+            max-width: 100%;
+            max-height: 100%;
+            width: 100%;
+        }
+
+        .modal-controls {
+            height: 80px;
+            background: rgba(20, 20, 20, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            gap: 20px;
+        }
+        
+        .close-modal-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        .close-modal-btn:hover { background: rgba(255,255,255,0.4); }
+
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #777;
+            grid-column: 1 / -1;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div style="display:flex; width:100%; height:100%;">
+        <!-- SIDEBAR (Only Menu Items) -->
+        <nav class="sidebar">
+            <div class="logo" onclick="loadGrid('Home')" style="margin-left: 12px; margin-bottom: 20px;">
+                <span>▶</span>Stream
+            </div>
+
+            <div class="nav-header">Menu</div>
+            <div class="nav-item active" id="nav-Home" onclick="loadGrid('Home')">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8"/></svg>
+                Home
+            </div>
+            <div class="nav-item" id="nav-Explore" onclick="loadGrid('Explore')">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-2.5l7.51-3.22-7.52-3.22 1.87-7.53 3.22 7.52 7.53 1.87-7.52 3.22z"/></svg>
+                Explore
+            </div>
+            <div class="nav-item" id="nav-Library" onclick="loadGrid('Library')">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                Library
+            </div>
+            <div class="nav-item" id="nav-Liked" onclick="loadGrid('Liked')">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                Liked Music
+            </div>
+        </nav>
+
+        <!-- MAIN -->
+        <div class="main-container">
+            <main class="content">
+                <div class="top-bar">
+                    <div class="logo" onclick="loadGrid('Home')"><span>▶</span>Stream</div>
+                    <div class="search-bar">
+                        <input type="text" id="searchInput" placeholder="Search songs, artists..." onkeyup="searchSongs(this.value)">
+                    </div>
+                    <div style="color:white">👤</div>
+                </div>
+
+                <!-- LANGUAGE MENU AT TOP -->
+                <div class="language-bar">
+                    <div class="lang-pill active" id="pill-All" onclick="loadGrid('Home')">All</div>
+                    <div class="lang-pill" id="pill-Telugu" onclick="loadGrid('Telugu')">Telugu</div>
+                    <div class="lang-pill" id="pill-Hindi" onclick="loadGrid('Hindi')">Hindi</div>
+                    <div class="lang-pill" id="pill-English" onclick="loadGrid('English')">English</div>
+                    <div class="lang-pill" id="pill-Tamil" onclick="loadGrid('Tamil')">Tamil</div>
+                    <div class="lang-pill" id="pill-Kannada" onclick="loadGrid('Kannada')">Kannada</div>
+                    <div class="lang-pill" id="pill-Korean" onclick="loadGrid('Korean')">Korean</div>
+                    <div class="lang-pill" id="pill-Chinese" onclick="loadGrid('Chinese')">Chinese</div>
+                </div>
+
+                <div class="section-header" id="pageTitle">Home</div>
+                <div class="grid" id="grid">
+                    <!-- Cards Injected via JS -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- PLAYER BAR -->
+    <footer class="player">
+        <div class="p-left">
+            <div class="p-art" id="playerArt"></div>
+            <div class="p-info">
+                <div class="p-title-row">
+                    <div class="p-title" id="playerTitle">Select a song</div>
+                    <button class="btn-like" id="likeBtn" onclick="toggleLike()" title="Add to Liked Music">♡</button>
+                </div>
+                <div class="p-sub" id="playerArtist">--</div>
+            </div>
+        </div>
+        <div class="p-center">
+            <div class="controls">
+                <button class="ctrl-btn">⏮</button>
+                <button class="ctrl-btn btn-play" id="playBtn" onclick="togglePlay()">▶</button>
+                <button class="ctrl-btn">⏭</button>
+            </div>
+            <div class="progress">
+                <span id="currTime">0:00</span>
+                <div class="prog-bar-bg" id="progBarBg">
+                    <div class="prog-bar-fill" id="progFill"></div>
+                </div>
+                <span id="totTime">0:00</span>
+            </div>
+        </div>
+        <div class="p-right">
+            <button class="btn-video" id="videoModeBtn" onclick="toggleVideoMode()">
+                📺 Video
+            </button>
+            <button class="ctrl-btn">🔊</button>
+        </div>
+    </footer>
+
+    <!-- VIDEO OVERLAY -->
+    <div class="video-modal" id="videoModal">
+        <button class="close-modal-btn" onclick="toggleVideoMode()">✕</button>
+        <div class="video-container">
+            <video id="mainVideo" playsinline></video>
+        </div>
+        <div class="modal-controls">
+            <div class="progress">
+                <span id="vidCurrTime">0:00</span>
+                <div class="prog-bar-bg" id="vidProgBarBg">
+                    <div class="prog-bar-fill" id="vidProgFill"></div>
+                </div>
+                <span id="vidTotTime">0:00</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* --- DATA GENERATOR --- */
+    const sampleVideos = [
+        "telusa.mp4", 
+        "https://www.w3schools.com/html/movie.mp4",
+        "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    ];
+    const sampleAudios = [
+        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"
+    ];
+
+    const specificHits = [
+        { title: "Telusaa Telusaa", artist: "Jubin Nautiyal & Sameera Bharadwaj", lang: "Telugu" , imgUrl: "sarrainodu.jpg", audioSrc: "Telusaa Telusaa - SenSongsMp3.Co.mp3", videoSrc: "telusa.mp4"},
+        { title: "Padi Padi Leche Manasu", artist: "Armaan Malik & Sinduri Vishal", lang: "Telugu", imgUrl: "padi.jpg", audioSrc: "Padi Padi Leche - SenSongsmp3.Co.mp3" },
+        { title: "Inthalo Ennenni Vinthalo", artist: "Chinmayee", lang: "Telugu", imgUrl: "karthikeya.jpg", audioSrc: "05 - Inthalo Ennenni Vinthalo Female.mp3" },
+        { title: "Hey Pillagada", artist: "Sindhuri", lang: "Telugu", imgUrl: "fidaa.jpg", audioSrc: "Hey Pillagaada-SenSongsMp3.Co.mp3" },
+        { title: "Kung Fu Kumari", artist: "Armaan Malik", lang: "Telugu", imgUrl: "bruce.jpg", audioSrc: "Kung Fu Kumaari-SenSongsMp3.Co.mp3" },
+        { title: "Kalalo Kooda" , artist: "Tanishk Bagchi, Sid Sriram", lang: "Telugu", imgUrl: "liger.png", audioSrc: "Kalalo Kooda.mp3" },
+        { title: "Inka Edo", artist: "G.V.Prakash & Suraj", lang: "Telugu", imgUrl: "dar.jpg", audioSrc: "Inka Edo-SenSongsMp3.Co.mp3" },
+        { title: "Inthadena Ithadena", artist: "Shreya Goshal", lang: "Telugu", imgUrl: "sk.jpg", audioSrc: "03 - Ithadena Ithadena - SenSongsMp3.Co.mp3" },
+        { title: "Ninnu Chuse Anandamlo", artist: "Anirudh Ravichander & Sid Sriram", lang: "Telugu", imgUrl: "nanis.webp", audioSrc: "Ninnu Chuse Anandamlo - SenSongsMp3.Co.mp3" },
+        { title: "Mandaara Mandaara", artist: "Shreya Goshal", lang: "Telugu" , imgUrl: "bhaagamathi.jpg", audioSrc: "Mandaara - SenSongsMp3.Co.mp3" },
+        { title: "Andamaina Lokam", artist: "Sagar & Haripriya", lang: "Telugu", imgUrl: "sivam.jpg", audioSrc: "Andamaina Lokam - SenSongsmp3.Co.mp3" },
+        { title: "Unnamata Cheppanivu", artist: "Tippu & Harini", lang: "Telugu", imgUrl: "nuv.jpg", audioSrc: "Unnamata Cheppanivu-SenSongsMp3.Co.mp3" },
+        { title: "Titli", artist: "Chinmayee", lang: "Hindi", imgUrl: "11.jpg", audioSrc: "Titli_Chennai_Express_Full_Video_Song_Shahrukh_Khan_Deepika_Padukone_128kbps.mp4" },
+        { title: "Zara Zara", artist: "Bombay Jayashree", lang: "Hindi", imgUrl: "13.jpg", audioSrc: "Zara_Zara_Bahekta_Hai_JalRaj_RHTDM_Male_Version_Latest_Hindi_Cover_2020_128kbps.mp4" },
+        { title: "Sun Saathiya", artist: "Priya Saraiya", lang: "Hindi", imgUrl: "12.jpg", audioSrc: "12.mp4" },
+        { title: "Kesariya", artist: "Arijit Singh & Shilpa Rao", lang: "Hindi", imgUrl: "14.jpg", audioSrc: "Kesariya(KoshalWorld.Com).mp3" },
+        { title: "Tum Hi Ho", artist: "Arijit Singh", lang: "Hindi", imgUrl: "16.jpg", audioSrc: "Tum Hi Ho(KoshalWorld.Com).mp3" },
+        { title: "Raatan Lambiyan", artist: "Sachet Tandon", lang: "Hindi", imgUrl: "17.jpg", audioSrc: "17.mp4" },
+        { title: "Agar Tum Saath Ho", artist: "Alka Yagnik & Arijit Singh", lang: "Hindi", imgUrl: "15.jpg", audioSrc: "Agar_Tum_Saath_Ho_FULL_AUDIO_Song_Tamasha_Ranbir_Kapoor_Deepika_Padukone_T-Series_128kbps.mp4" },
+        { title: "Chogada", artist: "Arijit Singh", lang: "Hindi", imgUrl: "18.jpg", audioSrc: "Chogada_With_Lyrics_Loveyatri_Aayush_Sharma_Warina_Hussain_Darshan_Raval_Lijo-DJ_Chetas_128KBPS.mp4" },
+        { title: "Mast Magan", artist: "Atif Aslam", lang: "Hindi", imgUrl: "19.jpg", audioSrc: "19.mp4" },
+        { title: "Cham Cham", artist: "Akhil Sachdeva & Tulsi Kumar", lang: "Hindi", imgUrl: "20.jpg", audioSrc: "18.mp4" },
+        { title: "Aaj Ki Raat", artist: "Madhubanti Bagchi", lang: "Hindi", imgUrl: "21.webp", audioSrc: "Aaj_Ki_Raat_-_8K_Video_Stree_2_Tamannaah_Bhatia_Rajkummar_Rao_Sachin-Jigar_Madhubanti_B_Divya_128kbps.mp4" },
+        { title: "Uyi Amma", artist: "Madhubanti Bagchi", lang: "Hindi", imgUrl: "22.jpg", audioSrc: "Uyi_Amma_-_Azaad_Aaman_D_Rasha_Thadani_Madhubanti_Bagchi_Amit_Trivedi_Amitabh_Bosco_Abhishek_K_128kbps.mp4" },
+        { title: "Love Me Like You Do", artist: "Ellie Goulding", lang: "English", imgUrl: "23.jpg", audioSrc: "23.mp4" },
+        { title: "Shape of You", artist: "Ed Sheeran", lang: "English", imgUrl: "24.jpg", audioSrc: "24.mp4" },
+        { title: "Moral of Story", artist: "Ashe", lang: "English", imgUrl: "25.jpg", audioSrc: "25.mp4" },
+        { title: "Blinding Lights", artist: "The Weeknd", lang: "English", imgUrl: "26.png", audioSrc: "26.mp4" },
+        { title: "Levitating", artist: "Dua Lipa", lang: "English", imgUrl: "27.jpg", audioSrc: "27.mp4" },
+        { title: "Unnale Ennalum", artist: "Hari Haran & Saindhavi", lang: "Tamil", imgUrl: "28.jpg", audioSrc: "28.mp4" },
+        { title: "Yaanji", artist: "Anirudh Ravichander & Shakthisree Gopalan", lang: "Tamil", imgUrl: "29.jpg", audioSrc: "29.mp4" },
+        { title: "Urugi Urugi", artist: "Anand Aravindakshan", lang: "Tamil", imgUrl: "30.jpg", audioSrc: "30.mp4" },
+        { title: "Senjitaley", artist: "Anirudh Ravichander & Vignesh Shivan", lang: "Tamil", imgUrl: "31.jpg", audioSrc: "31.mp4" },
+        { title: "Vazhithunaiye", artist: "Sid Sriram", lang: "Tamil", imgUrl: "32.jpg", audioSrc: "32.mp4" },
+        { title: "Mehabooba", artist: "Vijay Prakash", lang: "Kannada", imgUrl: "33.jpg", audioSrc: "33.mp4" },
+        { title: "O Saagari", artist: "Ravi Basrur", lang: "Kannada", imgUrl: "34.jpg", audioSrc: "34.mp4" },
+        { title: "Haayagide", artist: "Chandan Shetty", lang: "Kannada", imgUrl: "35.jpg", audioSrc: "35.mp4" },
+        { title: "Soul Of Dia", artist: "Vijay Prakash", lang: "Kannada", imgUrl: "36.jpg", audioSrc: "36.mp4" },
+        { title: "Naanu Neenu", artist: "Sonu Nigam & Shreya Ghoshal", lang: "Kannada", imgUrl: "37.jpg", audioSrc: "37.mp4" },
+        { title: "Sweet Night", artist: "Kim Taeh-yung", lang: "Korean", imgUrl: "38.jpg", audioSrc: "38.mp4" },
+        { title: "Love Myself", artist: "BTS", lang: "Korean", imgUrl: "39.jpg", audioSrc: "39.webm" },
+        { title: "Dynamite", artist: "BTS", lang: "Korean", imgUrl: "40.jpg", audioSrc: "40.webm" },
+        { title: "Super Shy", artist: "NewJeans", lang: "Korean", imgUrl: "41.jpg", audioSrc: "41.mp4" },
+        { title: "Its Definitely You", artist: "V & Jin", lang: "Korean", imgUrl: "42.jpg", audioSrc: "42.mp4" },
+        { title: "Blue", artist: "Yung Kai", lang: "Chinese", imgUrl: "43.jpg", audioSrc: "43.webm" },
+        { title: "Our Secret", artist: "Li Xinyi", lang: "Chinese", imgUrl: "44.jpg", audioSrc: "44.mp4" },
+        { title: "Fireworks", artist: "Zhou Shen", lang: "Chinese", imgUrl: "45.jpg", audioSrc: "45.mp4" },
+        { title: "Forever Star", artist: "Zhang Yihao", lang: "Chinese", imgUrl: "46.jpg", audioSrc: "46.mp4" },
+        { title: "Love 020", artist: "Yang Yang", lang: "Chinese", imgUrl: "47.jpg", audioSrc: "47.mp4" },
+        
+    ];
+
+    let songs = [];
+    
+    // Configuration: Limit songs per language
+    const languageLimits = {
+        "Telugu": 12,
+        "Hindi": 12,
+        "English": 5,
+        "Tamil": 5,
+        "Kannada": 5,
+        "Korean": 5,
+        "Chinese": 5
+    };
+
+    function generateDatabase() {
+        const languages = Object.keys(languageLimits);
+        
+        // Aesthetic filler titles
+        const fillerTitles = [
+            "Midnight Rain", "Golden Hour", "Ocean Waves", "Summer Breeze", "Neon Lights", 
+            "Velvet Sky", "Electric Dreams", "Silent Echo", "Morning Dew", "Pulse", 
+            "Deep Focus", "Lost in Time", "Urban Beat", "Chill Step", "Retro Flow",
+            "Starlight", "Moon Dust", "Sunrise", "Twilight", "Horizon"
+        ];
+
+        // 1. Add Specific Hits first
+        specificHits.forEach((song, index) => {
+            if (languageLimits.hasOwnProperty(song.lang)) {
+                // Only add if we haven't exceeded the limit yet for this language
+                const currentCount = songs.filter(s => s.lang === song.lang).length;
+                if(currentCount < languageLimits[song.lang]) {
+                    songs.push({
+                        id: index,
+                        title: song.title,
+                        artist: song.artist,
+                        lang: song.lang,
+                        liked: index < 5,
+                        imgUrl: song.imgUrl,
+                        audioSrc: song.audioSrc || sampleAudios[index % sampleAudios.length],
+                        videoSrc: sampleVideos[index % sampleVideos.length]
+                    });
+                }
+            }
+        });
+
+        // 2. Count how many songs we currently have for each language
+        let counts = {};
+        languages.forEach(l => counts[l] = 0);
+        songs.forEach(s => {
+            if (counts[s.lang] !== undefined) counts[s.lang]++;
+        });
+
+        // 3. Generate filler songs until we reach the specific target for each language
+        let idCounter = songs.length;
+        
+        languages.forEach(lang => {
+            let limit = languageLimits[lang];
+            while (counts[lang] < limit) {
+                const randomTitle = fillerTitles[idCounter % fillerTitles.length];
+                
+                songs.push({
+                    id: idCounter,
+                    title: `${lang} - ${randomTitle}`, 
+                    artist: `Artist ${Math.floor(Math.random() * 50) + 1}`,
+                    lang: lang,
+                    liked: false,
+                    imgUrl: "song_placeholder.jpg",
+                    audioSrc: sampleAudios[idCounter % sampleAudios.length],
+                    videoSrc: sampleVideos[idCounter % sampleVideos.length]
+                });
+                counts[lang]++;
+                idCounter++;
+            }
+        });
+    }
+    generateDatabase();
+
+    const grid = document.getElementById('grid');
+    const titleEl = document.getElementById('pageTitle');
+    const audioPlayer = new Audio();
+    const videoPlayer = document.getElementById('mainVideo');
+
+    let currentSong = null;
+    let isPlaying = false;
+    let isVideoMode = false;
+    let timer;
+
+    // --- RENDER FUNCTIONS ---
+
+    function createCard(song) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.setAttribute('data-id', song.id);
+        
+        card.onclick = () => playSong(song);
+        card.innerHTML = `
+            <div class="card-img-container">
+                <img src="${song.imgUrl}" alt="${song.title}" loading="lazy">
+                <div class="play-overlay">▶</div>
+            </div>
+            <div class="card-title">${song.title}</div>
+            <div class="card-sub">${song.artist} • ${song.lang}</div>
+        `;
+        return card;
+    }
+
+    function loadGrid(viewOrLang) {
+        // Update Navigation UI
+        updateNavUI(viewOrLang);
+
+        grid.innerHTML = ""; 
+
+        if (viewOrLang === 'Home') {
+            titleEl.textContent = "Home";
+            const customOrder = ['Telugu', 'Hindi', 'English', 'Tamil', 'Kannada', 'Korean', 'Chinese'];
+            const uniqueLangs = [...new Set(songs.map(s => s.lang))];
+            uniqueLangs.sort((a, b) => {
+                const indexA = customOrder.indexOf(a);
+                const indexB = customOrder.indexOf(b);
+                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                if (indexA === -1) return 1;
+                if (indexB === -1) return -1;
+                return 0;
+            });
+            uniqueLangs.forEach(lang => {
+                const header = document.createElement('h3');
+                header.className = 'sub-section-header';
+                header.textContent = `${lang} Hits`;
+                grid.appendChild(header);
+                songs.filter(s => s.lang === lang).forEach(song => grid.appendChild(createCard(song)));
+            });
+
+        } else if (viewOrLang === 'Explore') {
+            titleEl.textContent = "Explore";
+            const shuffled = [...songs].sort(() => 0.5 - Math.random());
+            shuffled.forEach(song => grid.appendChild(createCard(song)));
+
+        } else if (viewOrLang === 'Library') {
+            titleEl.textContent = "Your Library";
+            songs.forEach(song => grid.appendChild(createCard(song)));
+
+        } else if (viewOrLang === 'Liked') {
+            titleEl.textContent = "Liked Music";
+            const likedSongs = songs.filter(s => s.liked);
+            if(likedSongs.length === 0) {
+                grid.innerHTML = '<div class="empty-state">You have not liked any songs yet.<br>Click the heart icon in the player to add songs here.</div>';
+            } else {
+                likedSongs.forEach(song => grid.appendChild(createCard(song)));
+            }
+
+        } else {
+            // Specific Language Filter
+            titleEl.textContent = viewOrLang + " Songs";
+            const filtered = songs.filter(s => s.lang === viewOrLang);
+            filtered.forEach(song => grid.appendChild(createCard(song)));
+        }
+    }
+
+    // --- UI UPDATE HELPER ---
+
+    function updateNavUI(viewOrLang) {
+        // 1. Reset Sidebar
+        document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
+        
+        // 2. Reset Top Pills
+        document.querySelectorAll('.lang-pill').forEach(el => el.classList.remove('active'));
+
+        // 3. Determine Active Item
+        const sidebarItems = ['Home', 'Explore', 'Library', 'Liked'];
+        if (sidebarItems.includes(viewOrLang)) {
+            const activeSidebar = document.getElementById(`nav-${viewOrLang}`);
+            if (activeSidebar) activeSidebar.classList.add('active');
+            
+            if (viewOrLang === 'Home') {
+                document.getElementById('pill-All').classList.add('active');
+            }
+        } 
+        else {
+            const activePill = document.getElementById(`pill-${viewOrLang}`);
+            if (activePill) activePill.classList.add('active');
+        }
+    }
+
+    // --- LIKE FUNCTIONALITY ---
+
+    function toggleLike() {
+        if(!currentSong) return;
+        currentSong.liked = !currentSong.liked;
+        updateLikeBtnState();
+
+        if (titleEl.textContent === "Liked Music") {
+            if (currentSong.liked) {
+                grid.appendChild(createCard(currentSong));
+            } else {
+                const cardToRemove = grid.querySelector(`.card[data-id='${currentSong.id}']`);
+                if(cardToRemove) {
+                    cardToRemove.remove();
+                }
+                if(grid.querySelectorAll('.card').length === 0) {
+                    grid.innerHTML = '<div class="empty-state">You have not liked any songs yet.<br>Click the heart icon in the player to add songs here.</div>';
+                }
+            }
+        }
+    }
+
+    function updateLikeBtnState() {
+        const btn = document.getElementById('likeBtn');
+        if(currentSong && currentSong.liked) {
+            btn.innerHTML = '♥'; 
+            btn.classList.add('liked');
+        } else {
+            btn.innerHTML = '♡'; 
+            btn.classList.remove('liked');
+        }
+    }
+
+    // --- PLAYER LOGIC ---
+
+    function playSong(song) {
+        if (currentSong && currentSong.id === song.id && isPlaying) {
+            togglePlay(); 
+            return;
+        }
+
+        currentSong = song;
+        audioPlayer.src = song.audioSrc;
+        videoPlayer.src = song.videoSrc;
+
+        document.getElementById('playerTitle').textContent = song.title;
+        document.getElementById('playerArtist').textContent = song.artist;
+        document.getElementById('playerArt').style.backgroundImage = `url('${song.imgUrl}')`;
+        updateLikeBtnState();
+
+        document.getElementById('totTime').textContent = "--:--";
+        document.getElementById('vidTotTime').textContent = "--:--";
+
+        playMedia();
+    }
+
+    function playMedia() {
+        if(!currentSong) return;
+        isPlaying = true;
+        document.getElementById('playBtn').textContent = "⏸";
+
+        if(isVideoMode) {
+            videoPlayer.play().catch(e => console.log(e));
+            audioPlayer.pause();
+        } else {
+            audioPlayer.play().catch(e => console.log(e));
+            videoPlayer.pause();
+        }
+        startProgress();
+    }
+
+    function togglePlay() {
+        if(!currentSong) return;
+        isPlaying = !isPlaying;
+        document.getElementById('playBtn').textContent = isPlaying ? "⏸" : "▶";
+
+        if(isPlaying) {
+            if(isVideoMode) videoPlayer.play();
+            else audioPlayer.play();
+        } else {
+            if(isVideoMode) videoPlayer.pause();
+            else audioPlayer.pause();
+        }
+    }
+
+    function toggleVideoMode() {
+        if(!currentSong) return;
+        isVideoMode = !isVideoMode;
+        const modal = document.getElementById('videoModal');
+        const btn = document.getElementById('videoModeBtn');
+
+        if (isVideoMode) {
+            modal.classList.add('open');
+            btn.classList.add('active');
+            if(!audioPlayer.paused) videoPlayer.currentTime = audioPlayer.currentTime;
+            if(isPlaying) { audioPlayer.pause(); videoPlayer.play(); }
+        } else {
+            modal.classList.remove('open');
+            btn.classList.remove('active');
+            if(!videoPlayer.paused) audioPlayer.currentTime = videoPlayer.currentTime;
+            if(isPlaying) { videoPlayer.pause(); audioPlayer.play(); }
+        }
+    }
+
+    function searchSongs(query) {
+        const lower = query.toLowerCase();
+        const filtered = songs.filter(s => 
+            s.title.toLowerCase().includes(lower) || 
+            s.artist.toLowerCase().includes(lower) ||
+            s.lang.toLowerCase().includes(lower)
+        );
+        titleEl.textContent = "Search Results";
+        grid.innerHTML = "";
+        filtered.forEach(song => grid.appendChild(createCard(song)));
+    }
+
+    // --- PROGRESS LOGIC ---
+    function startProgress() {
+        clearInterval(timer);
+        timer = setInterval(() => {
+            if(!currentSong) return;
+            const activePlayer = isVideoMode ? videoPlayer : audioPlayer;
+            const dur = activePlayer.duration;
+            const cur = activePlayer.currentTime;
+
+            const pct = (cur / dur * 100 || 0) + "%";
+            
+            document.getElementById('progFill').style.width = pct;
+            document.getElementById('vidProgFill').style.width = pct;
+            
+            const timeStr = (s) => isNaN(s) ? "0:00" : `${Math.floor(s/60)}:${Math.floor(s%60)<10?'0'+Math.floor(s%60):Math.floor(s%60)}`;
+            
+            document.getElementById('currTime').textContent = timeStr(cur);
+            document.getElementById('totTime').textContent = timeStr(dur);
+            document.getElementById('vidCurrTime').textContent = timeStr(cur);
+            document.getElementById('vidTotTime').textContent = timeStr(dur);
+        }, 500);
+    }
+
+    document.getElementById('progBarBg').onclick = (e) => {
+        if(!currentSong) return;
+        const width = e.target.closest('.prog-bar-bg').clientWidth;
+        const pct = e.offsetX / width;
+        audioPlayer.currentTime = pct * audioPlayer.duration;
+        videoPlayer.currentTime = pct * videoPlayer.duration;
+    };
+    document.getElementById('vidProgBarBg').onclick = (e) => {
+        if(!currentSong) return;
+        const width = e.target.closest('.prog-bar-bg').clientWidth;
+        const pct = e.offsetX / width;
+        audioPlayer.currentTime = pct * audioPlayer.duration;
+        videoPlayer.currentTime = pct * videoPlayer.duration;
+    };
+
+    audioPlayer.addEventListener('ended', () => { isPlaying = false; document.getElementById('playBtn').textContent = "▶"; });
+    videoPlayer.addEventListener('ended', () => { isPlaying = false; document.getElementById('playBtn').textContent = "▶"; });
+
+    // Initial Load
+    loadGrid('Home');
+
+</script> 
+</body>
+</html>

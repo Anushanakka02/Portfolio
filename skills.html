@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skills | Anusha</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS VARIABLES --- */
+        :root {
+            --bg-dark: #020617;           
+            --deep-teal: #0f766e;         
+            --emerald: #059669;           
+            --cyan: #06b6d4;              
+            --purple: #7c3aed; 
+            
+            /* Gradients */
+            --primary-gradient: linear-gradient(135deg, var(--emerald), var(--deep-teal));
+            --bar-gradient: linear-gradient(90deg, var(--cyan), var(--deep-teal));
+            
+            /* Glassmorphism */
+            --glass-bg: rgba(6, 78, 59, 0.4);  
+            --glass-border: rgba(6, 182, 212, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            
+            /* Text Colors */
+            --text-white: #f1f5f9;
+            --text-gray: #cbd5e1;
+            --text-muted: #94a3b8;
+        }
+
+        /* --- GLOBAL STYLES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        html { scroll-behavior: smooth; }
+        body {
+            background-color: var(--bg-dark); color: var(--text-gray); line-height: 1.7;
+            display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; position: relative;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* --- BACKGROUND LAYERS --- */
+        #bg-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; display: block;
+        }
+        .animated-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            overflow: hidden; pointer-events: none;
+        }
+        .blob {
+            position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.4;
+            animation: floatBlob 30s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .blob-1 {
+            top: -10%; left: -10%; width: 50vw; height: 50vw;
+            background: radial-gradient(circle, var(--deep-teal), transparent); animation-duration: 40s;
+        }
+        .blob-2 {
+            bottom: -10%; right: -10%; width: 40vw; height: 40vw;
+            background: radial-gradient(circle, var(--purple), transparent); animation-duration: 50s; animation-delay: -10s;
+        }
+
+        /* --- HEADER --- */
+        header {
+            background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--glass-border);
+        }
+        nav {
+            display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 5%;
+            max-width: 1300px; margin: 0 auto;
+        }
+        .logo { color: var(--text-white); font-size: 1.8rem; font-weight: 700; text-decoration: none; }
+        .logo span { color: var(--cyan); }
+
+        nav ul { display: flex; list-style: none; gap: 2.5rem; }
+        nav ul li a {
+            color: var(--text-gray); font-weight: 500; font-size: 0.85rem;
+            transition: all 0.3s ease; position: relative; text-transform: uppercase; letter-spacing: 1px;
+        }
+        nav ul li a:hover, nav ul li a.active { color: var(--cyan); }
+        nav ul li a::after {
+            content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+            width: 4px; height: 4px; background-color: var(--cyan); border-radius: 50%; opacity: 0; transition: opacity 0.3s;
+        }
+        nav ul li a:hover::after { opacity: 1; }
+        .hamburger { display: none; cursor: pointer; font-size: 1.5rem; color: var(--text-white); }
+
+        /* --- MAIN SECTION --- */
+        .section {
+            padding: 5rem 5%; max-width: 1200px; margin: 3rem auto;
+            background: var(--glass-bg); backdrop-filter: blur(16px);
+            border-radius: 24px; box-shadow: var(--glass-shadow);
+            border: 1px solid var(--glass-border); flex: 1; animation: fadeIn 1.2s ease-out;
+            text-align: center;
+        }
+        .section h2 {
+            font-size: 2.5rem; line-height: 1.2; color: var(--text-white); margin-bottom: 4rem;
+            font-weight: 700; position: relative; display: inline-block;
+        }
+        .section h2::after {
+            content: ''; position: absolute; width: 60px; height: 4px; background: var(--text-gradient);
+            bottom: -10px; left: 50%; transform: translateX(-50%); border-radius: 2px;
+        }
+
+        /* --- PROFESSIONAL SKILLS GRID --- */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            text-align: left;
+        }
+
+        .skill-category {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            transition: transform 0.3s ease;
+        }
+
+        .skill-category:hover {
+            transform: translateY(-5px);
+            border-color: var(--cyan);
+        }
+
+        .category-title {
+            font-size: 1.5rem;
+            color: var(--text-white);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .category-title i {
+            color: var(--cyan);
+        }
+
+        .skill-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .skill-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-gray);
+        }
+
+        /* Align icon and text in label */
+        .skill-info span:first-child {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .skill-info span:last-child {
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        /* Progress Bar Background */
+        .progress-line {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated Progress Bar Fill */
+        .progress-line span {
+            display: block;
+            height: 100%;
+            background: var(--bar-gradient);
+            border-radius: 4px;
+            width: 0; /* Start at 0 for animation */
+            transition: width 1.5s cubic-bezier(0.2, 1, 0.2, 1); /* Smooth easing */
+            position: relative;
+        }
+
+        /* Add a glow effect to bar */
+        .progress-line span::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transform: translateX(-100%);
+            animation: shimmer 2s infinite;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            background: linear-gradient(to top, #000000, #022c22); color: var(--text-gray);
+            padding: 3rem 5%; text-align: center; margin-top: auto;
+            border-top: 1px solid var(--glass-border); position: relative; z-index: 10;
+        }
+        .social-links { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .social-links a {
+            width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.05);
+            display: flex; align-items: center; justify-content: center; color: var(--text-gray);
+            transition: all 0.3s; font-size: 1.1rem;
+        }
+        .social-links a:hover { background: var(--cyan); color: var(--bg-dark); transform: translateY(-5px) scale(1.1); box-shadow: 0 0 15px var(--cyan); }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes floatBlob { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0, 0) scale(1); } }
+        @keyframes shimmer { 100% { transform: translateX(100%); } }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .hamburger { display: block; }
+            nav ul {
+                position: fixed; top: 70px; right: -100%; width: 70%; background: #022c22;
+                flex-direction: column; align-items: center; padding: 2rem 0;
+                box-shadow: -10px 0px 30px -15px rgba(0, 0, 0, 0.7);
+                transition: right 0.4s ease; border-left: 1px solid var(--glass-border);
+            }
+            nav ul.active { right: 0; }
+            #bg-canvas { display: none; }
+            .skills-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+    <div class="animated-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+        <nav>
+            <div class="logo">
+                <a href="index.html" style="text-decoration: none;"><span>Anusha</span></a>
+            </div>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="skills.html" class="active">Skills</a></li>
+                <li><a href="projects.html">Projects</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+            <div class="hamburger"><i class="fas fa-bars"></i></div>
+        </nav>
+    </header>
+    
+    <!-- MAIN CONTENT -->
+    <main>
+        <section id="skills" class="section">
+            <h2>Technical Proficiency</h2>
+            
+            <div class="skills-grid">
+                <!-- Column 1: Front-End -->
+                <div class="skill-category">
+                    <div class="category-title">
+                        <i class="fas fa-code"></i> Front-End
+                    </div>
+                    
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span>HTML5</span>
+                            <span>85%</span>
+                        </div>
+                        <div class="progress-line"><span data-width="85%"></span></div>
+                    </div>
+
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span>CSS</span>
+                            <span>80%</span>
+                        </div>
+                        <div class="progress-line"><span data-width="80%"></span></div>
+                    </div>
+
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span>JavaScript</span>
+                            <span>65%</span>
+                        </div>
+                        <div class="progress-line"><span data-width="65%"></span></div>
+                    </div>
+                </div>
+
+                <!-- Column 2: Back-End / Languages -->
+                <div class="skill-category">
+                    <div class="category-title">
+                        <i class="fas fa-server"></i> Languages
+                    </div>
+                    
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span>C Language</span>
+                            <span>88%</span>
+                        </div>
+                        <div class="progress-line"><span data-width="88%"></span></div>
+                    </div>
+
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span>Java (OOPs)</span>
+                            <span>75%</span>
+                        </div>
+                        <div class="progress-line"><span data-width="75%"></span></div>
+                    </div>
+
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span>Python</span>
+                            <span>65%</span>
+                        </div>
+                        <div class="progress-line"><span data-width="65%"></span></div>
+                    </div>
+                </div>
+
+                <!-- Column 3: Other Skills -->
+                <div class="skill-category">
+                    <div class="category-title">
+                        <i class="fas fa-star"></i> Other Skills
+                    </div>
+                    
+                    <!-- REPLACED REACT.JS WITH GIT -->
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span><i class="fab fa-github"></i> Git & GitHub</span>
+                            <span>80%</span>
+                        </div>
+                        <div class="progress-line"><span data-width="80%"></span></div>
+                    </div>
+
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span><i class="fas fa-puzzle-piece"></i> Problem Solving</span>
+                            <span>90%</span>
+                        </div>
+                        <div class="progress-line"><span data-width="90%"></span></div>
+                    </div>
+
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span><i class="fas fa-comments"></i> Communication</span>
+                            <span>85%</span>
+                        </div>
+                        <div class="progress-line"><span data-width="85%"></span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content">
+            <div class="social-links">
+                <a href="#"><i class="fab fa-github"></i></a>
+                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+            <p>&copy; 2025 Anusha. All rights reserved.</p>
+        </div>
+    </footer>   
+
+    <!-- JAVASCRIPT -->
+    <script>
+        /* --- 1. CANVAS BACKGROUND LOGIC --- */
+        const canvas = document.getElementById('bg-canvas');
+        if(canvas) {
+            const ctx = canvas.getContext('2d');
+            let particlesArray;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            let mouse = { x: null, y: null, radius: (canvas.height/80) * (canvas.width/80) };
+            window.addEventListener('mousemove', function(event) { mouse.x = event.x; mouse.y = event.y; });
+            class Particle {
+                constructor(x, y, directionX, directionY, size, color) {
+                    this.x = x; this.y = y; this.directionX = directionX; this.directionY = directionY;
+                    this.size = size; this.color = color;
+                }
+                draw() {
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                    ctx.fillStyle = '#06b6d4'; ctx.fill();
+                }
+                update() {
+                    if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
+                    if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
+                    let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+                    let distance = Math.sqrt(dx*dx + dy*dy);
+                    if (distance < mouse.radius + this.size){
+                        if (mouse.x < this.x && this.x < canvas.width - this.size * 10) this.x += 2;
+                        if (mouse.x > this.x && this.x > this.size * 10) this.x -= 2;
+                        if (mouse.y < this.y && this.y < canvas.height - this.size * 10) this.y += 2;
+                        if (mouse.y > this.y && this.y > this.size * 10) this.y -= 2;
+                    }
+                    this.x += this.directionX; this.y += this.directionY; this.draw();
+                }
+            }
+            function init() {
+                particlesArray = [];
+                let numberOfParticles = (canvas.height * canvas.width) / 9000;
+                for (let i = 0; i < numberOfParticles; i++) {
+                    let size = (Math.random() * 2) + 1;
+                    let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                    let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                    let directionX = (Math.random() * 1) - 0.5;
+                    let directionY = (Math.random() * 1) - 0.5;
+                    let color = '#06b6d4';
+                    particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+                }
+            }
+            function animate() {
+                requestAnimationFrame(animate); ctx.clearRect(0,0,innerWidth, innerHeight);
+                for (let i = 0; i < particlesArray.length; i++) particlesArray[i].update();
+                connect();
+            }
+            function connect() {
+                let opacityValue = 1;
+                for (let a = 0; a < particlesArray.length; a++) {
+                    for (let b = a; b < particlesArray.length; b++) {
+                        let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x)) + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                        if (distance < (canvas.width/7) * (canvas.height/7)) {
+                            opacityValue = 1 - (distance/20000); ctx.strokeStyle = 'rgba(6, 182, 212,' + opacityValue + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(particlesArray[a].x, particlesArray[a].y); ctx.lineTo(particlesArray[b].x, particlesArray[b].y); ctx.stroke();
+                        }
+                    }
+                }
+            }
+            window.addEventListener('resize', function() {
+                canvas.width = innerWidth; canvas.height = innerHeight; mouse.radius = ((canvas.height/80) * (canvas.height/80)); init();
+            });
+            init(); animate();
+        }
+
+        /* --- 2. ANIMATE PROGRESS BARS ON SCROLL --- */
+        const skillsSection = document.querySelector('#skills');
+        const progressBars = document.querySelectorAll('.progress-line span');
+
+        const showProgress = () => {
+            progressBars.forEach(progressBar => {
+                const value = progressBar.getAttribute('data-width');
+                progressBar.style.width = value;
+            });
+        }
+
+        const hideProgress = () => {
+            progressBars.forEach(progressBar => {
+                progressBar.style.width = '0';
+            });
+        }
+
+        // Intersection Observer to trigger animation when section is visible
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if(entry.isIntersecting) {
+                    showProgress();
+                } else {
+                    // Optional: Reset animation when scrolling away so it plays again
+                    hideProgress(); 
+                }
+            });
+        }, { threshold: 0.2 });
+
+        observer.observe(skillsSection);
+
+        /* --- 3. MOBILE MENU LOGIC --- */
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('nav ul');
+        const links = document.querySelectorAll('nav ul li');
+
+        hamburger.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            const icon = hamburger.querySelector('i');
+            if(navLinks.classList.contains('active')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
+
+        links.forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+                hamburger.querySelector('i').classList.remove('fa-times');
+                hamburger.querySelector('i').classList.add('fa-bars');
+            });
+        });
+    </script>
+</body>
+</html>
